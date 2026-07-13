@@ -1,0 +1,56 @@
+# Second example: a 32-bit timer. Exercises access types the DMA example does
+# not — WO (write-only trigger), RW1C (interrupt flag), RC (read-to-ack) — so the
+# golden suite covers every logic shape the generators emit.
+block:
+  name: timer
+  description: A simple 32-bit down-counter timer with interrupt.
+  data_width: 32
+  addr_width: 8
+  base_address: 0x4000
+
+registers:
+  - name: LOAD
+    offset: 0x00
+    access: RW
+    reset: 0x0
+    description: Counter reload value.
+
+  - name: VALUE
+    offset: 0x04
+    access: RO
+    description: Current counter value (hardware-driven).
+
+  - name: CTRL
+    offset: 0x08
+    description: Timer control.
+    fields:
+      - name: ENABLE
+        bits: "0"
+        access: RW
+        reset: 0x0
+        description: 1 = counter running.
+      - name: MODE
+        bits: "1"
+        access: RW
+        reset: 0x0
+        enum:
+          - { name: ONESHOT,  value: 0, description: Stop at zero. }
+          - { name: PERIODIC, value: 1, description: Reload and continue. }
+      - name: TRIGGER
+        bits: "2"
+        access: WO
+        description: Write 1 to force an immediate reload.
+
+  - name: INT
+    offset: 0x0C
+    description: Interrupt status.
+    fields:
+      - name: FLAG
+        bits: "0"
+        access: RW1C
+        reset: 0x0
+        description: Set by HW at terminal count; write 1 to clear.
+      - name: ACK
+        bits: "1"
+        access: RC
+        description: Reading acknowledges the pending event.

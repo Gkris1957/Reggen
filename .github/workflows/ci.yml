@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  reggen:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reggen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Verilator gates the generated SystemVerilog; gcc (preinstalled) gates the C header.
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install -y verilator
+
+      - name: Install reggen
+        run: pip install -e ".[dev]"
+
+      - name: Run test suite (validation, IR, generators, golden-file regression)
+        run: pytest -q
+
+      # Functional sim: drive the generated AXI-Lite CSR over a real simulation.
+      - name: Install cocotb
+        run: pip install "cocotb==1.9.2"
+
+      - name: Functional sim (cocotb + Verilator)
+        env:
+          REGGEN_FUNCTIONAL: "1"
+        run: pytest -q tests/test_functional.py
+
+  dma-controller:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dma-controller
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install -y verilator
+
+      - name: Install reggen + cocotb
+        run: pip install -e "../reggen" "cocotb==1.9.2"
+
+      - name: Lint RTL (regenerates CSR from YAML)
+        run: make lint
+
+      - name: Functional sim (cocotb + Verilator, 12 tests)
+        run: make sim
+
+  sta-analyzer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sta-analyzer
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install sta-analyzer
+        run: pip install -e ".[dev]"
+
+      # Parser/heuristics + LLM layer via fake client — no API key needed.
+      - name: Run test suite
+        run: pytest -q

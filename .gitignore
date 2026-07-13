@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Verilator
+sim_build/
+obj_dir/
+*.vcd
+*.fst
+*.xml
+logs/
+
+# Cocotb
+results.xml
+# regenerated DUT for the functional sim (rebuilt from YAML by the Makefile)
+reggen/tests/functional/dma_csr.sv
+
+# Synthesis
+*.json
+!reggen/templates/*.json
+!reggen/reggen/schema.json
+*.blif
+*.edif
+.Xil/
+vivado*.log
+vivado*.jou
+
+# Quartus (dma-controller/syn — only dma.sdc and synth.tcl are source)
+dma-controller/syn/db/
+dma-controller/syn/incremental_db/
+dma-controller/syn/output/
+dma-controller/syn/*.qpf
+dma-controller/syn/*.qsf
+dma-controller/syn/*.log
+dma-controller/syn/*.rpt
+dma-controller/syn/*.summary
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Generated files - keep generated outputs out of git; regenerate from YAML
+dma-controller/rtl/csr.sv
+dma-controller/tb/uvm/csr_reg_block.sv
+dma-controller/rtl/csr.h
+dma-controller/docs/REGS.md

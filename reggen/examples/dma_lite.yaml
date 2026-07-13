@@ -1,0 +1,87 @@
+# Example reggen spec: a minimal AXI-Lite control/status block for the DMA.
+# Exercises every v0 feature: fields, access policies, resets, enums, an
+# implicit single-field register, and explicit hex offsets.
+block:
+  name: dma_csr
+  description: Control/status registers for the AXI DMA engine.
+  data_width: 32
+  addr_width: 12
+  base_address: 0x0000
+
+registers:
+  - name: CTRL
+    offset: 0x00
+    description: Global control.
+    fields:
+      - name: ENABLE
+        bits: "0"
+        access: RW
+        reset: 0x0
+        description: 1 = enable the DMA engine.
+      - name: RESET
+        bits: "1"
+        access: W1S
+        reset: 0x0
+        description: Write 1 to pulse a soft reset.
+      - name: DIRECTION
+        bits: "2"
+        access: RW
+        reset: 0x0
+        enum:
+          - { name: MEM_TO_DEV, value: 0, description: "Read memory, write device." }
+          - { name: DEV_TO_MEM, value: 1, description: "Read device, write memory." }
+      - name: BURST_LEN
+        bits: "11:4"
+        access: RW
+        reset: 0x10
+        description: AXI burst length in beats.
+
+  - name: STATUS
+    offset: 0x04
+    description: Engine status (hardware-driven).
+    fields:
+      - name: BUSY
+        bits: "0"
+        access: RO
+        description: 1 = transfer in progress.
+      - name: DONE
+        bits: "1"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on completion; write 1 to clear.
+      - name: ERROR
+        bits: "2"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on bus error; write 1 to clear.
+
+  - name: SRC_ADDR
+    offset: 0x08
+    access: RW
+    reset: 0x0
+    description: Source byte address (whole-register field).
+
+  - name: DST_ADDR
+    offset: 0x0C
+    access: RW
+    reset: 0x0
+    description: Destination byte address (whole-register field).
+
+  - name: LENGTH
+    offset: 0x10
+    access: RW
+    reset: 0x0
+    description: Transfer length in bytes.
+
+  - name: INT_EN
+    offset: 0x14
+    description: Interrupt enables.
+    fields:
+      - name: DONE_EN
+        bits: "0"
+        access: RW
+        reset: 0x0
+      - name: ERROR_EN
+        bits: "1"
+        access: RW
+        reset: 0x0

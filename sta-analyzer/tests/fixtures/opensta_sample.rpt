@@ -1,0 +1,56 @@
+Startpoint: u_ch0/rd_words_reg_3_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: u_ch0/rd_burst_reg_6_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 ^ u_ch0/rd_words_reg_3_/CK (DFF_X1)
+   0.09    0.09 ^ u_ch0/rd_words_reg_3_/Q (DFF_X1)
+   1.10    1.19 v u_ch0/_cmp_gt_1024_/ZN (AND4_X1)
+   1.35    2.54 v u_ch0/_min_stage_a_/ZN (OAI221_X1)
+   1.02    3.56 v u_ch0/_min_stage_b_/ZN (OAI221_X1)
+   0.61    4.17 v u_ch0/rd_burst_reg_6_/D (DFF_X1)
+           4.17   data arrival time
+
+  10.00   10.00   clock clk (rise edge)
+   0.00   10.00   clock network delay (ideal)
+   0.00   10.00   clock reconvergence pessimism
+          10.00 ^ u_ch0/rd_burst_reg_6_/CK (DFF_X1)
+  -0.04    9.96   library setup time
+           9.96   data required time
+---------------------------------------------------------
+           9.96   data required time
+          -4.17   data arrival time
+---------------------------------------------------------
+           5.79   slack (MET)
+
+
+Startpoint: u_ch1/wr_words_reg_5_ (rising edge-triggered flip-flop clocked by clk)
+Endpoint: u_ch1/wr_burst_reg_7_ (rising edge-triggered flip-flop clocked by clk)
+Path Group: clk
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00   clock clk (rise edge)
+   0.00    0.00   clock network delay (ideal)
+   0.00    0.00 ^ u_ch1/wr_words_reg_5_/CK (DFF_X1)
+   0.09    0.09 ^ u_ch1/wr_words_reg_5_/Q (DFF_X1)
+   3.20    3.29 v u_ch1/_wide_compare_/ZN (AND4_X4)
+   4.11    7.40 v u_ch1/_min_chain_/ZN (OAI221_X1)
+   3.35   10.75 v u_ch1/wr_burst_reg_7_/D (DFF_X1)
+          10.75   data arrival time
+
+  10.00   10.00   clock clk (rise edge)
+   0.00   10.00   clock network delay (ideal)
+          10.00 ^ u_ch1/wr_burst_reg_7_/CK (DFF_X1)
+  -0.04    9.96   library setup time
+           9.96   data required time
+---------------------------------------------------------
+           9.96   data required time
+         -10.75   data arrival time
+---------------------------------------------------------
+          -0.79   slack (VIOLATED)

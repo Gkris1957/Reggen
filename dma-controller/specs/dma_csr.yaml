@@ -1,0 +1,169 @@
+# DMA controller register map (v2) — single source of truth.
+# Consumed by reggen: rtl/csr.sv, tb/uvm/csr_reg_block.sv, rtl/csr.h,
+# docs/REGS.md.  Regenerate with `make regen`.
+#
+# v2: two independent channels sharing one AXI4 master port through a
+# round-robin arbiter. Per-channel bank stride is 0x20. Each channel supports
+# three modes (CTRL.MODE): MM2MM (memory copy), MM2S (memory -> AXI-Stream),
+# S2MM (AXI-Stream -> memory). LENGTH is byte-granular: the final beat uses
+# partial write strobes / TKEEP. Addresses remain word-aligned.
+#
+# Programming model per channel:
+#   1. write CHn_SRC_ADDR / CHn_DST_ADDR / CHn_LENGTH
+#   2. write CHn_CTRL: MODE, BURST_LEN, START=1 (START self-clears)
+#   3. poll CHn_STATUS.BUSY or wait for irq; DONE/ERROR are W1C
+block:
+  name: dma_csr
+  description: Control/status registers for the 2-channel AXI DMA engine.
+  data_width: 32
+  addr_width: 12
+  base_address: 0x0000
+
+registers:
+  # ---- channel 0 (base 0x00) ----
+  - name: CH0_CTRL
+    offset: 0x00
+    description: Channel 0 command and configuration.
+    fields:
+      - name: START
+        bits: "0"
+        access: W1S
+        reset: 0x0
+        description: Write 1 to start. Self-clearing; ignored while BUSY=1.
+      - name: MODE
+        bits: "2:1"
+        access: RW
+        reset: 0x0
+        description: Transfer mode.
+        enum:
+          - { name: MM2MM, value: 0, description: Memory to memory copy. }
+          - { name: MM2S,  value: 1, description: Memory to AXI-Stream out. }
+          - { name: S2MM,  value: 2, description: AXI-Stream in to memory. }
+      - name: BURST_LEN
+        bits: "15:8"
+        access: RW
+        reset: 0x10
+        description: Max AXI burst length in beats (1-255; 0 treated as 1).
+  - name: CH0_STATUS
+    offset: 0x04
+    description: Channel 0 status.
+    fields:
+      - name: BUSY
+        bits: "0"
+        access: RO
+        description: 1 while a transfer is in progress.
+      - name: DONE
+        bits: "1"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on clean completion; write 1 to clear.
+      - name: ERROR
+        bits: "2"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on a non-OKAY bus response; transfer aborted.
+  - name: CH0_SRC_ADDR
+    offset: 0x08
+    access: RW
+    reset: 0x0
+    description: Channel 0 source byte address (word aligned; MM2MM/MM2S).
+  - name: CH0_DST_ADDR
+    offset: 0x0C
+    access: RW
+    reset: 0x0
+    description: Channel 0 destination byte address (word aligned; MM2MM/S2MM).
+  - name: CH0_LENGTH
+    offset: 0x10
+    access: RW
+    reset: 0x0
+    description: >
+      Channel 0 transfer length in bytes (byte granular; the final beat uses
+      partial strobes/TKEEP). LENGTH=0 completes immediately.
+
+  # ---- channel 1 (base 0x20) ----
+  - name: CH1_CTRL
+    offset: 0x20
+    description: Channel 1 command and configuration.
+    fields:
+      - name: START
+        bits: "0"
+        access: W1S
+        reset: 0x0
+        description: Write 1 to start. Self-clearing; ignored while BUSY=1.
+      - name: MODE
+        bits: "2:1"
+        access: RW
+        reset: 0x0
+        description: Transfer mode.
+        enum:
+          - { name: MM2MM, value: 0, description: Memory to memory copy. }
+          - { name: MM2S,  value: 1, description: Memory to AXI-Stream out. }
+          - { name: S2MM,  value: 2, description: AXI-Stream in to memory. }
+      - name: BURST_LEN
+        bits: "15:8"
+        access: RW
+        reset: 0x10
+        description: Max AXI burst length in beats (1-255; 0 treated as 1).
+  - name: CH1_STATUS
+    offset: 0x24
+    description: Channel 1 status.
+    fields:
+      - name: BUSY
+        bits: "0"
+        access: RO
+        description: 1 while a transfer is in progress.
+      - name: DONE
+        bits: "1"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on clean completion; write 1 to clear.
+      - name: ERROR
+        bits: "2"
+        access: W1C
+        reset: 0x0
+        description: Set by HW on a non-OKAY bus response; transfer aborted.
+  - name: CH1_SRC_ADDR
+    offset: 0x28
+    access: RW
+    reset: 0x0
+    description: Channel 1 source byte address (word aligned; MM2MM/MM2S).
+  - name: CH1_DST_ADDR
+    offset: 0x2C
+    access: RW
+    reset: 0x0
+    description: Channel 1 destination byte address (word aligned; MM2MM/S2MM).
+  - name: CH1_LENGTH
+    offset: 0x30
+    access: RW
+    reset: 0x0
+    description: >
+      Channel 1 transfer length in bytes (byte granular; the final beat uses
+      partial strobes/TKEEP). LENGTH=0 completes immediately.
+
+  # ---- global ----
+  - name: INT_EN
+    offset: 0x80
+    description: >
+      Interrupt enables. irq is the OR of every enabled channel flag:
+      irq = |(CHn_STATUS.{DONE,ERROR} & INT_EN.CHn_{DONE,ERROR}_EN).
+    fields:
+      - name: CH0_DONE_EN
+        bits: "0"
+        access: RW
+        reset: 0x0
+      - name: CH0_ERROR_EN
+        bits: "1"
+        access: RW
+        reset: 0x0
+      - name: CH1_DONE_EN
+        bits: "2"
+        access: RW
+        reset: 0x0
+      - name: CH1_ERROR_EN
+        bits: "3"
+        access: RW
+        reset: 0x0
+  - name: VERSION
+    offset: 0x84
+    access: RO
+    description: Hardware version, major.minor.patch packed as 0x00MMmmpp.
